@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
             ..color = Colors.red
             ..strokeWidth = 5));
       records.add(null);
+      // adding null points after each point to make a dotted line.
     }
     return MaterialApp(
       title: 'Flutter Demo',
@@ -44,55 +45,46 @@ class DrawingWidget extends StatefulWidget {
 class _DrawingWidgetState extends State<DrawingWidget> {
   _DrawingWidgetState();
   List<TouchPoints?> drawPoints = [];
-  Timer? _timer;
-  int index = 0;
-  int stepCounter = 0;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
     print('Building drawing widget');
+    drawPoints = [];
 
     return SafeArea(
       child: Scaffold(
           body: SizedBox.expand(
-              child: Stack(children: [
-        ClipRRect(
-            borderRadius: const BorderRadius.all(Radius.circular(20)),
-            child: StreamBuilder<TouchPoints?>(
-                stream: doStuff(widget.rec),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.active) {
-                    drawPoints.add(snapshot.data);
-                  }
-                  return CustomPaint(
-                      size: Size.infinite,
-                      painter: SignaturePainter(
-                        points: drawPoints,
-                      ));
-                })),
-      ]))),
+              child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  child: StreamBuilder<TouchPoints?>(
+                      stream: doStuff(widget.rec),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.active) {
+                          drawPoints.add(snapshot.data);
+                        }
+                        return CustomPaint(
+                            size: Size.infinite,
+                            painter: SignaturePainter(
+                              points: drawPoints,
+                            ));
+                      })))),
     );
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
   Future<TouchPoints?> convert(TouchPoints? thing) async {
-    await Future.delayed(const Duration(milliseconds: 5));
+    await Future.delayed(const Duration(milliseconds: 2));
+    // changing the delay for function does affect the
+    // accuracy of painter results.
+    // set this to 5 milliseconds and then there will be a smooth line, which is not required here.
+    // set this to 25 milliseconds, or more, and then there will be a dotted line of x = y.
+
     return thing;
   }
 
   Stream<TouchPoints?> doStuff(List<TouchPoints?> things) {
     return Stream.fromIterable(things).asyncMap(convert);
-    // return Stream.fromIterable(things.map((t) async => await convert(t)));
+    // This asyncMap seems to be the culprit here, My Guess!...
   }
 }
 
